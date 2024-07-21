@@ -1,7 +1,8 @@
-
 const mongoose = require('mongoose');
+const config = require('./config');
 
-mongoose.connect("");
+mongoose.connect(config.mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+
 
 const userSchema = new mongoose.Schema({
     username: {
