@@ -1,5 +1,6 @@
-const JWT_SECRET = 'codewalker66';
+require('dotenv').config
 
 module.exports = {
-    JWT_SECRET
-}
+    jwtSecret: process.env.JWT_SECRET,
+    mongoUrl: process.env.MONGODB_URL,
+};
