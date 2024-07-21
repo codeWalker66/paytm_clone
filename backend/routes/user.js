@@ -2,7 +2,7 @@ const express = require("express");
 const zod = require("zod");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../config");
-const { User } = require("../db");
+const { User, Account } = require("../db");
 const { authMiddleware } = require("../middleware");
 
 const router = express.Router();
@@ -20,9 +20,9 @@ const signInBody = zod.object({
 })
 
 const updateBody = zod.object({
-    password: zod.string(), 
-    firstName: zod.string(), 
-    lastName: zod.string(),
+    password: zod.string().optional(), 
+    firstName: zod.string().optional(), 
+    lastName: zod.string().optional(),
 })
 
 router.post('/signup', async (req,res) =>{
@@ -52,6 +52,11 @@ router.post('/signup', async (req,res) =>{
             password: password,
         });
         const userId = user._id;
+
+        await Account.create({
+            userId,
+            balance: 1 + Math.random() * 10000,
+        })
         const token = jwt.sign({
             userId,
         }, JWT_SECRET);
@@ -136,7 +141,7 @@ router.put('/', authMiddleware, async(req , res)=>{
 router.get('/get', async(req,res) =>{
     const filter = req.query.filter || "";
 
-    const user = await.User.find({
+    const user = await User.find({
         $or:[{
             firstName:{
                 $regex:filter,
@@ -156,7 +161,9 @@ router.get('/get', async(req,res) =>{
             _id:user._id,
         }))
     })
-})
+});
+
+
 module.exports = {
     router,
 }
