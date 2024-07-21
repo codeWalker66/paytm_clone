@@ -2,7 +2,8 @@ const express = require("express");
 const zod = require("zod");
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require("../config");
-const { User } = require("../db")
+const { User } = require("../db");
+const { authMiddleware } = require("../middleware");
 
 const router = express.Router();
 
@@ -16,6 +17,12 @@ const signUpBody = zod.object({
 const signInBody = zod.object({
     username: zod.string().email(),
     password: zod.string(),
+})
+
+const updateBody = zod.object({
+    password: zod.string(), 
+    firstName: zod.string(), 
+    lastName: zod.string(),
 })
 
 router.post('/signup', async (req,res) =>{
@@ -101,7 +108,55 @@ router.post('/signin', async (req,res)=>{
     }
 });
 
+router.put('/', authMiddleware, async(req , res)=>{
+    const { success } = updateBody.safeParse(req.body);
+    if(!success){
+        return res.status(411).json({
+            message: "Invalid Input.",
+        })
+    }
 
+    try{
+        await User.updateOne(req.body, {
+            _id:req.userId,
+        })
+
+        res.json({
+            message: "Updated Successfully",
+        })
+    }
+    catch(error){
+        console.error(error)
+        return res.json({
+            message: "Internal Server Error",
+        })
+    }
+});
+
+router.get('/get', async(req,res) =>{
+    const filter = req.query.filter || "";
+
+    const user = await.User.find({
+        $or:[{
+            firstName:{
+                $regex:filter,
+            }            
+        },{
+            lastName:{
+                $regex:filter,
+            }
+        }]
+    })
+
+    res.json({
+        user:user.map(user =>({
+            username: user.username,
+            firstName : user.firstName,
+            lastName: user.lastName,
+            _id:user._id,
+        }))
+    })
+})
 module.exports = {
     router,
 }
